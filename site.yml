@@ -1,0 +1,87 @@
+---
+###############################################################################
+# Main Site Playbook - Web Server Stack Provisioning
+# Description: Orchestrates the deployment of Apache, PHP 8.2, and Composer
+# Target OS: Rocky Linux 9
+# Author: DevOps Team
+# Version: 1.0.0
+###############################################################################
+
+- name: Deploy Web Server Stack on Rocky Linux 9
+  # hosts: webservers
+  hosts: 127.0.0.1
+  connection: local
+  become: true
+  gather_facts: true
+  
+  # Pre-tasks run before roles
+  pre_tasks:
+    - name: Display target host information
+      ansible.builtin.debug:
+        msg: "Deploying to {{ inventory_hostname }} ({{ ansible_distribution }} {{ ansible_distribution_version }})"
+    
+    - name: Verify Rocky Linux 9
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == "Rocky"
+          - ansible_distribution_major_version == "9"
+        fail_msg: "This playbook requires Rocky Linux 9"
+        success_msg: "Operating system verified: Rocky Linux 9"
+    
+    - name: Update system packages cache
+      ansible.builtin.dnf:
+        update_cache: true
+      changed_when: false
+  
+  # Roles execution order
+  roles:
+    - role: common
+      tags: ['common', 'base']
+      
+    - role: httpd
+      tags: ['httpd', 'apache', 'webserver']
+      
+    - role: php
+      tags: ['php', 'composer']
+  
+  # Post-tasks run after all roles
+  post_tasks:
+    - name: Verify Apache is running
+      ansible.builtin.service:
+        name: httpd
+        state: started
+      check_mode: true
+      register: httpd_status
+      changed_when: false
+    
+    - name: Verify PHP installation
+      ansible.builtin.command: php -v
+      register: php_version
+      changed_when: false
+      failed_when: php_version.rc != 0
+    
+    - name: Display PHP version
+      ansible.builtin.debug:
+        msg: "{{ php_version.stdout_lines[0] }}"
+    
+    - name: Verify Composer installation
+      ansible.builtin.command: composer --version
+      register: composer_version
+      changed_when: false
+      failed_when: composer_version.rc != 0
+    
+    - name: Display Composer version
+      ansible.builtin.debug:
+        msg: "{{ composer_version.stdout_lines[0] }}"
+    
+    - name: Deployment summary
+      ansible.builtin.debug:
+        msg: 
+          - "========================================"
+          - "Web Server Stack Deployment Complete"
+          - "========================================"
+          - "Host: {{ inventory_hostname }}"
+          - "Apache: Installed and Running"
+          - "PHP: {{ php_version.stdout_lines[0] }}"
+          - "Composer: {{ composer_version.stdout_lines[0] }}"
+          - "========================================"

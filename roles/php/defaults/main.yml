@@ -1,0 +1,85 @@
+---
+###############################################################################
+# Default Variables for PHP Role
+# Override these in group_vars or host_vars as needed
+###############################################################################
+
+# PHP version and repository
+php_version: "8.2"
+php_enable_remi_repo: true
+
+# Remi repository configuration
+remi_repo_url: "https://rpms.remirepo.net/enterprise/remi-release-9.rpm"
+remi_repo_gpg_key: "https://rpms.remirepo.net/RPM-GPG-KEY-remi2023"
+
+# PHP packages to install
+php_packages:
+  - php
+  - php-cli
+  - php-common
+  - php-fpm
+  - php-mysqlnd
+  - php-pdo
+  - php-gd
+  - php-mbstring
+  - php-xml
+  - php-curl
+  - php-zip
+  - php-json
+  - php-opcache
+  - php-intl
+  - php-soap
+  - php-bcmath
+
+# PHP-FPM service
+php_fpm_service: php-fpm
+
+# PHP configuration file paths
+php_ini_file: "/etc/php.ini"
+php_fpm_conf_file: "/etc/php-fpm.d/www.conf"
+
+# PHP Configuration Variables (defaults - override in group_vars)
+php_date_timezone: "UTC"
+php_display_errors: "Off"
+php_display_startup_errors: "Off"
+php_error_reporting: "E_ALL & ~E_DEPRECATED & ~E_STRICT"
+php_log_errors: "On"
+php_memory_limit: "128M"
+php_max_execution_time: "30"
+php_max_input_time: "60"
+php_post_max_size: "8M"
+php_upload_max_filesize: "8M"
+php_max_file_uploads: "20"
+php_max_input_vars: "1000"
+php_output_buffering: "4096"
+
+# PHP-FPM Configuration
+php_fpm_listen: "/run/php-fpm/www.sock"
+php_fpm_listen_owner: "apache"
+php_fpm_listen_group: "apache"
+php_fpm_listen_mode: "0660"
+php_fpm_user: "apache"
+php_fpm_group: "apache"
+php_fpm_pm: "dynamic"
+php_fpm_pm_max_children: 50
+php_fpm_pm_start_servers: 5
+php_fpm_pm_min_spare_servers: 5
+php_fpm_pm_max_spare_servers: 35
+
+# Session configuration
+php_session_save_handler: "files"
+php_session_save_path: "/var/lib/php/session"
+php_session_gc_maxlifetime: "1440"
+
+# OPcache configuration
+php_opcache_enable: "1"
+php_opcache_memory_consumption: "128"
+php_opcache_interned_strings_buffer: "8"
+php_opcache_max_accelerated_files: "10000"
+php_opcache_revalidate_freq: "2"
+
+# Composer configuration
+composer_install: true
+composer_install_path: "/usr/local/bin/composer"
+composer_version: "latest"
+composer_keep_updated: false

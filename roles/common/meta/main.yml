@@ -1,0 +1,26 @@
+---
+###############################################################################
+# Role: common
+# Description: Base system configuration and common packages
+###############################################################################
+
+galaxy_info:
+  role_name: common
+  author: DevOps Team
+  description: Common system configuration for Rocky Linux 9
+  company: Your Company
+  license: MIT
+  min_ansible_version: 2.10
+  
+  platforms:
+    - name: EL
+      versions:
+        - 9
+  
+  galaxy_tags:
+    - system
+    - base
+    - rocky
+    - rhel
+
+dependencies: []

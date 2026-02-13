@@ -1,0 +1,26 @@
+---
+###############################################################################
+# Role: php
+# Description: PHP 8.2 installation from Remi repository and Composer
+###############################################################################
+
+galaxy_info:
+  role_name: php
+  author: DevOps Team
+  description: PHP 8.2 installation from Remi repository with Composer for Rocky Linux 9
+  company: Your Company
+  license: MIT
+  min_ansible_version: 2.10
+  
+  platforms:
+    - name: EL
+      versions:
+        - 9
+  
+  galaxy_tags:
+    - php
+    - remi
+    - composer
+    - web
+
+dependencies: []

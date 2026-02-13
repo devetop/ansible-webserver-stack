@@ -1,0 +1,124 @@
+---
+###############################################################################
+# httpd Role - Main Tasks
+# Description: Install and configure Apache HTTP Server
+###############################################################################
+
+- name: Install Apache HTTP Server and related packages
+  ansible.builtin.dnf:
+    name: "{{ httpd_packages }}"
+    state: present
+  tags: ['install']
+
+- name: Create Apache document root directory
+  ansible.builtin.file:
+    path: "{{ httpd_document_root }}"
+    state: directory
+    owner: apache
+    group: apache
+    mode: '0755'
+  tags: ['config']
+
+- name: Deploy custom Apache configuration
+  ansible.builtin.template:
+    src: httpd.conf.j2
+    dest: /etc/httpd/conf/httpd.conf
+    owner: root
+    group: root
+    mode: '0644'
+    validate: 'httpd -t -f %s'
+  notify: restart httpd
+  tags: ['config']
+
+- name: Deploy security configuration
+  ansible.builtin.template:
+    src: security.conf.j2
+    dest: /etc/httpd/conf.d/security.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart httpd
+  tags: ['config', 'security']
+
+- name: Create default index.html if it doesn't exist
+  ansible.builtin.copy:
+    content: |
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>Welcome to {{ ansible_hostname }}</title>
+          <style>
+              body { font-family: Arial, sans-serif; margin: 50px; }
+              h1 { color: #333; }
+              .info { background: #f4f4f4; padding: 20px; border-radius: 5px; }
+          </style>
+      </head>
+      <body>
+          <h1>Web Server is Running!</h1>
+          <div class="info">
+              <p><strong>Hostname:</strong> {{ ansible_hostname }}</p>
+              <p><strong>Server:</strong> Apache HTTP Server</p>
+              <p><strong>PHP Version:</strong> <?php echo phpversion(); ?></p>
+              <p><strong>Document Root:</strong> {{ httpd_document_root }}</p>
+          </div>
+          <?php phpinfo(); ?>
+      </body>
+      </html>
+    dest: "{{ httpd_document_root }}/index.php"
+    owner: apache
+    group: apache
+    mode: '0644'
+    force: false
+  tags: ['config']
+
+- name: Configure SELinux for Apache
+  block:
+    - name: Set SELinux boolean for httpd network connect
+      ansible.posix.seboolean:
+        name: httpd_can_network_connect
+        state: true
+        persistent: true
+    
+    - name: Set proper SELinux context for document root
+      community.general.sefcontext:
+        target: "{{ httpd_document_root }}(/.*)?"
+        setype: httpd_sys_content_t
+        state: present
+    
+    - name: Apply SELinux context to document root
+      ansible.builtin.command: restorecon -Rv {{ httpd_document_root }}
+      changed_when: false
+  when: 
+    - ansible_selinux.status is defined
+    - ansible_selinux.status == "enabled"
+  tags: ['selinux']
+
+- name: Open firewall ports for HTTP/HTTPS
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop:
+    - http
+    - https
+  when: configure_firewall | default(true)
+  tags: ['firewall']
+
+- name: Start and enable Apache service
+  ansible.builtin.service:
+    name: "{{ httpd_service_name }}"
+    state: started
+    enabled: true
+  tags: ['service']
+
+- name: Verify Apache is listening on port {{ httpd_listen_port }}
+  ansible.builtin.wait_for:
+    port: "{{ httpd_listen_port }}"
+    delay: 2
+    timeout: 30
+  tags: ['verify']
+
+- name: Display Apache status
+  ansible.builtin.debug:
+    msg: "Apache HTTP Server is installed and running on port {{ httpd_listen_port }}"

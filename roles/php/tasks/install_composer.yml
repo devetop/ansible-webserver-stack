@@ -1,0 +1,83 @@
+---
+###############################################################################
+# Install Composer Globally
+###############################################################################
+
+- name: Check if Composer is already installed
+  ansible.builtin.stat:
+    path: "{{ composer_install_path }}"
+  register: composer_binary
+
+- name: Download Composer installer
+  ansible.builtin.get_url:
+    url: https://getcomposer.org/installer
+    dest: /tmp/composer-setup.php
+    mode: '0644'
+  when: not composer_binary.stat.exists
+
+- name: Verify Composer installer signature
+  ansible.builtin.shell: |
+    EXPECTED_CHECKSUM="$(php -r 'copy("https://composer.github.io/installer.sig", "php://stdout");')"
+    ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', '/tmp/composer-setup.php');")"
+    if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]; then
+        echo "ERROR: Invalid installer signature"
+        exit 1
+    fi
+  args:
+    executable: /bin/bash
+  register: composer_verify
+  changed_when: false
+  when: not composer_binary.stat.exists
+
+- name: Install Composer globally
+  ansible.builtin.command: >
+    php /tmp/composer-setup.php
+    --install-dir={{ composer_install_path | dirname }}
+    --filename={{ composer_install_path | basename }}
+    {% if composer_version != 'latest' %}--version={{ composer_version }}{% endif %}
+  args:
+    creates: "{{ composer_install_path }}"
+  when: not composer_binary.stat.exists
+
+- name: Remove Composer installer
+  ansible.builtin.file:
+    path: /tmp/composer-setup.php
+    state: absent
+
+- name: Set Composer executable permissions
+  ansible.builtin.file:
+    path: "{{ composer_install_path }}"
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Verify Composer installation
+  ansible.builtin.command: "{{ composer_install_path }} --version"
+  register: composer_version_output
+  changed_when: false
+
+- name: Display Composer version
+  ansible.builtin.debug:
+    msg: "{{ composer_version_output.stdout }}"
+
+- name: Update Composer to latest version
+  ansible.builtin.command: "{{ composer_install_path }} self-update"
+  register: composer_update
+  changed_when: "'Updating' in composer_update.stdout"
+  when: 
+    - composer_keep_updated | default(false)
+    - composer_version == 'latest'
+
+- name: Create Composer cache directory
+  ansible.builtin.file:
+    path: /root/.composer/cache
+    state: directory
+    mode: '0755'
+
+- name: Set Composer global configuration
+  ansible.builtin.command: "{{ composer_install_path }} config --global {{ item.key }} {{ item.value }}"
+  loop:
+    - { key: 'process-timeout', value: '2000' }
+    - { key: 'cache-files-ttl', value: '15552000' }
+  changed_when: false
+  failed_when: false

@@ -1,0 +1,22 @@
+---
+###############################################################################
+# httpd Role - Handlers
+# Description: Service management handlers for Apache
+###############################################################################
+
+- name: restart httpd
+  ansible.builtin.service:
+    name: "{{ httpd_service_name }}"
+    state: restarted
+  listen: restart httpd
+
+- name: reload httpd
+  ansible.builtin.service:
+    name: "{{ httpd_service_name }}"
+    state: reloaded
+  listen: reload httpd
+
+- name: validate httpd config
+  ansible.builtin.command: httpd -t
+  changed_when: false
+  listen: validate httpd config

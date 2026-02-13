@@ -1,0 +1,51 @@
+---
+###############################################################################
+# Group Variables for Web Servers
+# These variables apply to all hosts in the 'webservers' group
+###############################################################################
+
+# PHP Configuration Variables
+# All values can be overridden per host in host_vars if needed
+
+# Timezone configuration
+php_date_timezone: "UTC"
+
+# Error handling and debugging
+php_display_errors: "Off"  # Set to "On" for development, "Off" for production
+php_display_startup_errors: "Off"
+php_error_reporting: "E_ALL & ~E_DEPRECATED & ~E_STRICT"
+php_log_errors: "On"
+
+# Memory and execution limits
+php_memory_limit: "256M"
+php_max_execution_time: "300"
+php_max_input_time: "60"
+
+# Upload limits
+php_post_max_size: "64M"
+php_upload_max_filesize: "64M"
+php_max_file_uploads: "20"
+
+# Session configuration
+php_session_save_path: "/var/lib/php/session"
+php_session_gc_maxlifetime: "1440"
+
+# Additional PHP settings
+php_max_input_vars: "3000"
+php_output_buffering: "4096"
+
+# Apache configuration
+apache_listen_port: 80
+apache_server_admin: "webmaster@example.com"
+apache_document_root: "/var/www/html"
+
+# Composer configuration
+composer_install_path: "/usr/local/bin/composer"
+composer_version: "latest"  # or specify a version like "2.6.5"
+
+# Security settings
+disable_selinux: false  # Keep SELinux enabled for security
+configure_firewall: true
+
+# Environment type (can be overridden in inventory)
+environment: "production"

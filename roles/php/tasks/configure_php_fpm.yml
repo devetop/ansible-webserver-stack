@@ -1,0 +1,84 @@
+---
+###############################################################################
+# Configure PHP-FPM
+###############################################################################
+
+- name: Backup original PHP-FPM configuration
+  ansible.builtin.copy:
+    src: "{{ php_fpm_conf_file }}"
+    dest: "{{ php_fpm_conf_file }}.backup.{{ ansible_date_time.epoch }}"
+    remote_src: true
+    force: false
+  failed_when: false
+
+- name: Configure PHP-FPM pool settings
+  ansible.builtin.lineinfile:
+    path: "{{ php_fpm_conf_file }}"
+    regexp: "^;?{{ item.key }}"
+    line: "{{ item.key }} = {{ item.value }}"
+    state: present
+  loop:
+    - { key: 'user', value: '{{ php_fpm_user }}' }
+    - { key: 'group', value: '{{ php_fpm_group }}' }
+    - { key: 'listen', value: '{{ php_fpm_listen }}' }
+    - { key: 'listen.owner', value: '{{ php_fpm_listen_owner }}' }
+    - { key: 'listen.group', value: '{{ php_fpm_listen_group }}' }
+    - { key: 'listen.mode', value: '{{ php_fpm_listen_mode }}' }
+    - { key: 'pm', value: '{{ php_fpm_pm }}' }
+    - { key: 'pm.max_children', value: '{{ php_fpm_pm_max_children }}' }
+    - { key: 'pm.start_servers', value: '{{ php_fpm_pm_start_servers }}' }
+    - { key: 'pm.min_spare_servers', value: '{{ php_fpm_pm_min_spare_servers }}' }
+    - { key: 'pm.max_spare_servers', value: '{{ php_fpm_pm_max_spare_servers }}' }
+  notify: restart php-fpm
+
+- name: Ensure PHP-FPM run directory exists
+  ansible.builtin.file:
+    path: /run/php-fpm
+    state: directory
+    owner: "{{ php_fpm_user }}"
+    group: "{{ php_fpm_group }}"
+    mode: '0755'
+
+- name: Configure Apache to use PHP-FPM
+  ansible.builtin.copy:
+    content: |
+      # PHP-FPM configuration for Apache
+      <FilesMatch \.php$>
+          SetHandler "proxy:unix:{{ php_fpm_listen }}|fcgi://localhost"
+      </FilesMatch>
+      
+      # Deny access to raw php sources by default
+      <FilesMatch "\.ph(p[3457]?|t|tml)$">
+          Require all denied
+      </FilesMatch>
+      
+      # Allow php files in document root
+      <FilesMatch "\.php$">
+          Require all granted
+      </FilesMatch>
+      
+      # Enable proxy_fcgi module
+      <IfModule !proxy_fcgi_module>
+          LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so
+      </IfModule>
+    dest: /etc/httpd/conf.d/php-fpm.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart httpd
+
+- name: Start and enable PHP-FPM service
+  ansible.builtin.service:
+    name: "{{ php_fpm_service }}"
+    state: started
+    enabled: true
+
+- name: Verify PHP-FPM is running
+  ansible.builtin.command: systemctl status php-fpm
+  register: php_fpm_status
+  changed_when: false
+  failed_when: php_fpm_status.rc != 0
+
+- name: Display PHP-FPM status
+  ansible.builtin.debug:
+    msg: "PHP-FPM service is running and enabled"

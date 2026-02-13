@@ -1,0 +1,37 @@
+---
+###############################################################################
+# Default Variables for Common Role
+# These can be overridden in group_vars or host_vars
+###############################################################################
+
+# Common packages to install on all servers
+common_packages:
+  - vim
+  - wget
+  - curl
+  - git
+  - unzip
+  - tar
+  - rsync
+  - htop
+  - net-tools
+  - bind-utils
+  - telnet
+  - tcpdump
+  - nc
+  - chrony
+
+# NTP/Time synchronization
+ntp_enabled: true
+ntp_timezone: "UTC"
+
+# Firewall configuration
+firewall_enabled: true
+common_firewall_ports:
+  - 22/tcp  # SSH
+
+# SELinux mode (enforcing, permissive, disabled)
+selinux_mode: "enforcing"
+
+# System limits
+configure_system_limits: true

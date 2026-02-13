@@ -1,0 +1,52 @@
+---
+###############################################################################
+# Install PHP 8.2 and Extensions
+###############################################################################
+
+- name: Install PHP and extensions
+  ansible.builtin.dnf:
+    name: "{{ php_packages }}"
+    state: present
+    enablerepo: "remi,remi-php{{ php_version | replace('.', '') }}"
+  register: php_install
+  notify: restart php-fpm
+
+- name: Verify PHP installation
+  ansible.builtin.command: php -v
+  register: php_version_check
+  changed_when: false
+  failed_when: php_version_check.rc != 0
+
+- name: Display installed PHP version
+  ansible.builtin.debug:
+    msg: "{{ php_version_check.stdout_lines[0] }}"
+
+- name: Ensure PHP session directory exists
+  ansible.builtin.file:
+    path: "{{ php_session_save_path }}"
+    state: directory
+    owner: "{{ php_fpm_user }}"
+    group: "{{ php_fpm_group }}"
+    mode: '0770'
+    setype: httpd_var_lib_t
+  when: php_session_save_path is defined
+
+- name: Create PHP log directory
+  ansible.builtin.file:
+    path: /var/log/php
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Check installed PHP modules
+  ansible.builtin.command: php -m
+  register: php_modules
+  changed_when: false
+
+- name: Display critical PHP modules status
+  ansible.builtin.debug:
+    msg: 
+      - "PHP Modules Loaded:"
+      - "{{ php_modules.stdout_lines }}"
+  when: ansible_verbosity >= 1

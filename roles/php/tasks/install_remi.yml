@@ -1,0 +1,52 @@
+---
+###############################################################################
+# Install Remi Repository for PHP 8.2
+###############################################################################
+
+- name: Check if Remi repository is already installed
+  ansible.builtin.stat:
+    path: /etc/yum.repos.d/remi.repo
+  register: remi_repo_file
+
+- name: Install Remi repository
+  ansible.builtin.dnf:
+    name: "{{ remi_repo_url }}"
+    state: present
+    disable_gpg_check: false
+  when: not remi_repo_file.stat.exists
+
+- name: Import Remi GPG key
+  ansible.builtin.rpm_key:
+    key: "{{ remi_repo_gpg_key }}"
+    state: present
+
+- name: Enable PowerTools/CRB repository (required for PHP dependencies)
+  ansible.builtin.command: dnf config-manager --set-enabled crb
+  args:
+    warn: false
+  changed_when: false
+  failed_when: false
+
+- name: Reset PHP module to clear any defaults
+  ansible.builtin.command: dnf module reset php -y
+  args:
+    warn: false
+  changed_when: false
+  failed_when: false
+
+- name: Enable PHP {{ php_version }} module from Remi
+  ansible.builtin.command: "dnf module enable php:remi-{{ php_version }} -y"
+  args:
+    warn: false
+  register: php_module_enable
+  changed_when: "'Enabling module streams' in php_module_enable.stdout"
+
+- name: Verify Remi repository is enabled
+  ansible.builtin.command: dnf repolist | grep remi
+  register: remi_repo_check
+  changed_when: false
+  failed_when: remi_repo_check.rc != 0
+
+- name: Display Remi repository status
+  ansible.builtin.debug:
+    msg: "Remi repository for PHP {{ php_version }} is enabled and ready"

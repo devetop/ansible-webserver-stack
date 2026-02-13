@@ -1,0 +1,91 @@
+---
+###############################################################################
+# Configure PHP Settings via php.ini
+###############################################################################
+
+- name: Backup original php.ini
+  ansible.builtin.copy:
+    src: "{{ php_ini_file }}"
+    dest: "{{ php_ini_file }}.backup.{{ ansible_date_time.epoch }}"
+    remote_src: true
+    force: false
+  failed_when: false
+
+- name: Configure PHP settings using template
+  ansible.builtin.template:
+    src: php.ini.j2
+    dest: "{{ php_ini_file }}"
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  notify:
+    - restart php-fpm
+    - restart httpd
+
+- name: Configure individual PHP settings (fallback method)
+  ansible.builtin.lineinfile:
+    path: "{{ php_ini_file }}"
+    regexp: "^;?{{ item.key }}"
+    line: "{{ item.key }} = {{ item.value }}"
+    state: present
+  loop:
+    - { key: 'date.timezone', value: '{{ php_date_timezone }}' }
+    - { key: 'display_errors', value: '{{ php_display_errors }}' }
+    - { key: 'display_startup_errors', value: '{{ php_display_startup_errors }}' }
+    - { key: 'error_reporting', value: '{{ php_error_reporting }}' }
+    - { key: 'log_errors', value: '{{ php_log_errors }}' }
+    - { key: 'memory_limit', value: '{{ php_memory_limit }}' }
+    - { key: 'max_execution_time', value: '{{ php_max_execution_time }}' }
+    - { key: 'max_input_time', value: '{{ php_max_input_time }}' }
+    - { key: 'post_max_size', value: '{{ php_post_max_size }}' }
+    - { key: 'upload_max_filesize', value: '{{ php_upload_max_filesize }}' }
+    - { key: 'max_file_uploads', value: '{{ php_max_file_uploads }}' }
+    - { key: 'max_input_vars', value: '{{ php_max_input_vars }}' }
+    - { key: 'output_buffering', value: '{{ php_output_buffering }}' }
+  notify:
+    - restart php-fpm
+    - restart httpd
+  when: false  # Disabled when using template, enable if template is not used
+
+- name: Configure PHP session settings
+  ansible.builtin.lineinfile:
+    path: "{{ php_ini_file }}"
+    regexp: "^;?{{ item.key }}"
+    line: "{{ item.key }} = {{ item.value }}"
+    state: present
+  loop:
+    - { key: 'session.save_handler', value: '{{ php_session_save_handler }}' }
+    - { key: 'session.save_path', value: '"{{ php_session_save_path }}"' }
+    - { key: 'session.gc_maxlifetime', value: '{{ php_session_gc_maxlifetime }}' }
+  notify:
+    - restart php-fpm
+    - restart httpd
+  when: false  # Disabled when using template
+
+- name: Configure OPcache settings
+  ansible.builtin.lineinfile:
+    path: "{{ php_ini_file }}"
+    regexp: "^;?{{ item.key }}"
+    line: "{{ item.key }}={{ item.value }}"
+    state: present
+  loop:
+    - { key: 'opcache.enable', value: '{{ php_opcache_enable }}' }
+    - { key: 'opcache.memory_consumption', value: '{{ php_opcache_memory_consumption }}' }
+    - { key: 'opcache.interned_strings_buffer', value: '{{ php_opcache_interned_strings_buffer }}' }
+    - { key: 'opcache.max_accelerated_files', value: '{{ php_opcache_max_accelerated_files }}' }
+    - { key: 'opcache.revalidate_freq', value: '{{ php_opcache_revalidate_freq }}' }
+  notify:
+    - restart php-fpm
+    - restart httpd
+  when: false  # Disabled when using template
+
+- name: Validate PHP configuration
+  ansible.builtin.command: php -i
+  register: php_config_check
+  changed_when: false
+  failed_when: php_config_check.rc != 0
+
+- name: Display PHP configuration validation result
+  ansible.builtin.debug:
+    msg: "PHP configuration is valid"

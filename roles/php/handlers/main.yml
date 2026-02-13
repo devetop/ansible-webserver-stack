@@ -1,0 +1,28 @@
+---
+###############################################################################
+# PHP Role - Handlers
+# Description: Service management handlers for PHP and PHP-FPM
+###############################################################################
+
+- name: restart php-fpm
+  ansible.builtin.service:
+    name: "{{ php_fpm_service }}"
+    state: restarted
+  listen: restart php-fpm
+
+- name: reload php-fpm
+  ansible.builtin.service:
+    name: "{{ php_fpm_service }}"
+    state: reloaded
+  listen: reload php-fpm
+
+- name: restart httpd
+  ansible.builtin.service:
+    name: httpd
+    state: restarted
+  listen: restart httpd
+
+- name: validate php config
+  ansible.builtin.command: php -i
+  changed_when: false
+  listen: validate php config

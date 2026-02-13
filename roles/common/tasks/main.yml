@@ -1,0 +1,118 @@
+---
+###############################################################################
+# Common Role - Main Tasks
+# Description: Base system setup and common package installation
+###############################################################################
+
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+  when: inventory_hostname is defined
+
+- name: Update all packages to latest version
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    update_cache: true
+  tags: ['packages', 'update']
+
+- name: Install EPEL repository
+  ansible.builtin.dnf:
+    name: epel-release
+    state: present
+  tags: ['packages', 'repos']
+
+- name: Install common system packages
+  ansible.builtin.dnf:
+    name: "{{ common_packages }}"
+    state: present
+  tags: ['packages']
+
+- name: Ensure chrony is installed and running (NTP)
+  block:
+    - name: Install chrony for time synchronization
+      ansible.builtin.dnf:
+        name: chrony
+        state: present
+    
+    - name: Start and enable chrony service
+      ansible.builtin.service:
+        name: chronyd
+        state: started
+        enabled: true
+  when: ntp_enabled | default(true)
+  tags: ['ntp', 'time']
+
+- name: Set system timezone
+  community.general.timezone:
+    name: "{{ ntp_timezone | default('UTC') }}"
+  tags: ['time']
+
+- name: Configure firewalld
+  block:
+    - name: Ensure firewalld is installed
+      ansible.builtin.dnf:
+        name: firewalld
+        state: present
+    
+    - name: Start and enable firewalld
+      ansible.builtin.service:
+        name: firewalld
+        state: started
+        enabled: true
+    
+    - name: Open common firewall ports
+      ansible.posix.firewalld:
+        port: "{{ item }}"
+        permanent: true
+        state: enabled
+        immediate: true
+      loop: "{{ common_firewall_ports }}"
+      when: common_firewall_ports is defined
+  when: firewall_enabled | default(true)
+  tags: ['firewall']
+
+- name: Configure SELinux
+  ansible.posix.selinux:
+    policy: targeted
+    state: "{{ selinux_mode | default('enforcing') }}"
+  when: ansible_selinux.status is defined and ansible_selinux.status != 'disabled'
+  tags: ['selinux']
+
+- name: Disable unnecessary services
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop:
+    - postfix
+  failed_when: false
+  tags: ['services']
+
+- name: Configure system limits
+  ansible.builtin.pam_limits:
+    domain: "*"
+    limit_type: "{{ item.limit_type }}"
+    limit_item: "{{ item.limit_item }}"
+    value: "{{ item.value }}"
+  loop:
+    - { limit_type: 'soft', limit_item: 'nofile', value: '65536' }
+    - { limit_type: 'hard', limit_item: 'nofile', value: '65536' }
+    - { limit_type: 'soft', limit_item: 'nproc', value: '32768' }
+    - { limit_type: 'hard', limit_item: 'nproc', value: '32768' }
+  when: configure_system_limits | default(true)
+  tags: ['limits']
+
+- name: Create common directory structure
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/scripts
+    - /var/log/applications
+  tags: ['directories']
+
+- name: Display common role completion message
+  ansible.builtin.debug:
+    msg: "Common system configuration completed successfully"

@@ -1,0 +1,42 @@
+---
+###############################################################################
+# PHP Role - Main Tasks
+# Description: Install PHP 8.2 from Remi repository and configure
+###############################################################################
+
+- name: Include Remi repository installation tasks
+  ansible.builtin.include_tasks: install_remi.yml
+  tags: ['install', 'remi']
+
+- name: Include PHP installation tasks
+  ansible.builtin.include_tasks: install_php.yml
+  tags: ['install', 'php']
+
+- name: Include PHP configuration tasks
+  ansible.builtin.include_tasks: configure_php.yml
+  tags: ['config', 'php']
+
+- name: Include PHP-FPM configuration tasks
+  ansible.builtin.include_tasks: configure_php_fpm.yml
+  tags: ['config', 'php-fpm']
+
+- name: Include Composer installation tasks
+  ansible.builtin.include_tasks: install_composer.yml
+  when: composer_install | default(true)
+  tags: ['install', 'composer']
+
+- name: Display PHP installation summary
+  ansible.builtin.debug:
+    msg:
+      - "========================================="
+      - "PHP Installation Summary"
+      - "========================================="
+      - "PHP Version: {{ php_version }}"
+      - "PHP INI: {{ php_ini_file }}"
+      - "Timezone: {{ php_date_timezone }}"
+      - "Memory Limit: {{ php_memory_limit }}"
+      - "Max Execution Time: {{ php_max_execution_time }}s"
+      - "Upload Max Filesize: {{ php_upload_max_filesize }}"
+      - "Post Max Size: {{ php_post_max_size }}"
+      - "Composer: {{ 'Installed' if composer_install else 'Not Installed' }}"
+      - "========================================="

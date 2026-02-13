@@ -1,0 +1,26 @@
+---
+###############################################################################
+# Role: httpd
+# Description: Apache HTTP Server installation and configuration
+###############################################################################
+
+galaxy_info:
+  role_name: httpd
+  author: DevOps Team
+  description: Apache HTTP Server installation and configuration for Rocky Linux 9
+  company: Your Company
+  license: MIT
+  min_ansible_version: 2.10
+  
+  platforms:
+    - name: EL
+      versions:
+        - 9
+  
+  galaxy_tags:
+    - web
+    - apache
+    - httpd
+    - webserver
+
+dependencies: []
