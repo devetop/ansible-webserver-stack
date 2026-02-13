@@ -9,7 +9,7 @@
 
 - name: Deploy Web Server Stack on Rocky Linux 9
   # hosts: webservers
-  hosts: 127.0.0.1
+  hosts: localhost
   connection: local
   become: true
   gather_facts: true
