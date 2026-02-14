@@ -19,6 +19,12 @@
     mode: '0755'
   tags: ['config']
 
+- name: Remove ssl.conf
+  ansible.builtin.file:
+    path: /etc/httpd/conf.d/ssl.conf
+    state: absent
+  tags: ['config']
+
 - name: Deploy custom Apache configuration
   ansible.builtin.template:
     src: httpd.conf.j2
