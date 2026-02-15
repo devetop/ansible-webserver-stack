@@ -1,0 +1,39 @@
+---
+###############################################################################
+# Role: vhosts
+# Description: Apache VirtualHosts management with multi-PHP version support
+###############################################################################
+
+galaxy_info:
+  role_name: vhosts
+  author: DevOps Team
+  description: >
+    Apache VirtualHosts management role with support for:
+    - User directory configurations (/home/user/public_html)
+    - Multi-PHP version support (7.4, 8.0, 8.1, 8.2, 8.3)
+    - Dynamic VirtualHost creation/removal
+    - PHP-FPM integration via proxy_fcgi
+    - mod_userdir configuration
+  company: Your Company
+  license: MIT
+  min_ansible_version: 2.10
+  
+  platforms:
+    - name: EL
+      versions:
+        - 9
+  
+  galaxy_tags:
+    - web
+    - apache
+    - virtualhost
+    - php
+    - php-fpm
+    - hosting
+
+dependencies: []
+
+# Optional: Specify dependencies if this role requires httpd and php roles
+# dependencies:
+#   - role: httpd
+#   - role: php

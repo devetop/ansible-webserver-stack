@@ -1,0 +1,93 @@
+---
+###############################################################################
+# Example Playbook - Apache VirtualHosts Management
+# File: playbook_vhosts.yml
+# 
+# Usage:
+#   ansible-playbook playbook_vhosts.yml
+#   ansible-playbook playbook_vhosts.yml --tags vhosts
+#   ansible-playbook playbook_vhosts.yml --check
+###############################################################################
+
+- name: Configure Apache VirtualHosts with Multi-PHP Support
+  hosts: webservers
+  become: true
+  gather_facts: true
+  
+  # Variables can be defined here or in group_vars/host_vars
+  vars:
+    # Example VirtualHosts configuration
+    vhosts_list:
+      # Production site with PHP 8.2
+      - domain: "example.com"
+        username: "example"
+        php_version: "8.2"
+        state: "present"
+        server_admin: "admin@example.com"
+        server_alias: "www.example.com"
+      
+      # Development site with PHP 8.1
+      - domain: "dev.example.com"
+        username: "devuser"
+        php_version: "8.1"
+        state: "present"
+        server_admin: "dev@example.com"
+        log_level: "debug"
+      
+      # Legacy site with PHP 7.4
+      - domain: "legacy.example.com"
+        username: "legacy"
+        php_version: "7.4"
+        state: "present"
+        server_admin: "legacy@example.com"
+      
+      # Staging site with PHP 8.3
+      - domain: "staging.example.com"
+        username: "staging"
+        php_version: "8.3"
+        state: "present"
+        server_admin: "staging@example.com"
+      
+      # Removed/disabled site (will be deleted)
+      - domain: "old.example.com"
+        username: "olduser"
+        php_version: "7.4"
+        state: "absent"
+        archive_on_remove: true  # Backup before removal
+    
+    # Global VirtualHost settings
+    vhosts_userdir_enabled: true
+    vhosts_ssl_enabled: false
+    vhosts_create_dirs: true
+  
+  # Pre-tasks
+  pre_tasks:
+    - name: Ensure required users exist
+      ansible.builtin.user:
+        name: "{{ item.username }}"
+        state: "{{ 'present' if item.state == 'present' else 'absent' }}"
+        shell: /bin/bash
+        create_home: true
+      loop: "{{ vhosts_list }}"
+      tags: ['users']
+  
+  # Roles
+  roles:
+    - role: vhosts
+      tags: ['vhosts']
+  
+  # Post-tasks
+  post_tasks:
+    - name: Display deployment summary
+      ansible.builtin.debug:
+        msg:
+          - "========================================="
+          - "VirtualHosts Deployment Complete"
+          - "========================================="
+          - "Active domains:"
+          - "{{ vhosts_list | selectattr('state', 'equalto', 'present') | map(attribute='domain') | list }}"
+          - "========================================="
+          - "Test your VirtualHosts:"
+          - "  curl http://example.com"
+          - "  curl http://dev.example.com/info.php"
+          - "========================================="

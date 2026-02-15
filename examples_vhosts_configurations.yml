@@ -1,0 +1,279 @@
+---
+###############################################################################
+# VirtualHosts Role - Example Configurations
+# File: examples/vhosts_examples.yml
+#
+# This file contains various example configurations for different scenarios
+###############################################################################
+
+# ===========================================================================
+# EXAMPLE 1: Basic Single VirtualHost
+# ===========================================================================
+example_basic:
+  vhosts_list:
+    - domain: "mysite.com"
+      username: "mysite"
+      php_version: "8.2"
+      state: "present"
+
+# ===========================================================================
+# EXAMPLE 2: Multiple VirtualHosts with Different PHP Versions
+# ===========================================================================
+example_multi_php:
+  vhosts_list:
+    # Modern application with PHP 8.2
+    - domain: "modern.example.com"
+      username: "modern"
+      php_version: "8.2"
+      state: "present"
+      server_admin: "admin@example.com"
+    
+    # Staging with PHP 8.1
+    - domain: "staging.example.com"
+      username: "staging"
+      php_version: "8.1"
+      state: "present"
+      server_admin: "staging@example.com"
+    
+    # Legacy app with PHP 7.4
+    - domain: "legacy.example.com"
+      username: "legacy"
+      php_version: "7.4"
+      state: "present"
+      server_admin: "legacy@example.com"
+
+# ===========================================================================
+# EXAMPLE 3: Production Setup with SSL
+# ===========================================================================
+example_production_ssl:
+  vhosts_ssl_enabled: true
+  vhosts_list:
+    - domain: "secure.example.com"
+      username: "secure"
+      php_version: "8.2"
+      state: "present"
+      server_admin: "admin@example.com"
+      server_alias: "www.secure.example.com"
+      ssl_enabled: true
+      ssl_cert_file: "/etc/letsencrypt/live/secure.example.com/fullchain.pem"
+      ssl_key_file: "/etc/letsencrypt/live/secure.example.com/privkey.pem"
+
+# ===========================================================================
+# EXAMPLE 4: Development Environment
+# ===========================================================================
+example_development:
+  vhosts_list:
+    - domain: "dev1.local"
+      username: "dev1"
+      php_version: "8.2"
+      state: "present"
+      log_level: "debug"
+    
+    - domain: "dev2.local"
+      username: "dev2"
+      php_version: "8.1"
+      state: "present"
+      log_level: "debug"
+    
+    - domain: "test.local"
+      username: "testuser"
+      php_version: "8.3"
+      state: "present"
+      log_level: "info"
+
+# ===========================================================================
+# EXAMPLE 5: Migration Scenario (Remove Old, Add New)
+# ===========================================================================
+example_migration:
+  vhosts_list:
+    # New site (being added)
+    - domain: "newsite.com"
+      username: "newsite"
+      php_version: "8.2"
+      state: "present"
+      server_admin: "admin@newsite.com"
+    
+    # Old site (being removed with backup)
+    - domain: "oldsite.com"
+      username: "oldsite"
+      php_version: "7.4"
+      state: "absent"
+      archive_on_remove: true
+
+# ===========================================================================
+# EXAMPLE 6: WordPress Hosting
+# ===========================================================================
+example_wordpress:
+  vhosts_list:
+    - domain: "blog.example.com"
+      username: "wpuser1"
+      php_version: "8.1"  # WordPress recommended
+      state: "present"
+      server_admin: "wp@example.com"
+      additional_config: |
+        # WordPress specific configuration
+        <Directory /home/wpuser1/public_html>
+            # Enable .htaccess overrides
+            AllowOverride All
+            
+            # Limit file upload size
+            php_value upload_max_filesize 64M
+            php_value post_max_size 64M
+            php_value memory_limit 256M
+            php_value max_execution_time 300
+        </Directory>
+
+# ===========================================================================
+# EXAMPLE 7: Laravel Application
+# ===========================================================================
+example_laravel:
+  vhosts_list:
+    - domain: "app.example.com"
+      username: "laravel"
+      php_version: "8.2"
+      state: "present"
+      server_admin: "dev@example.com"
+      additional_config: |
+        # Laravel configuration
+        DocumentRoot /home/laravel/public_html/public
+        
+        <Directory /home/laravel/public_html/public>
+            Options -Indexes +FollowSymLinks
+            AllowOverride All
+            Require all granted
+            
+            # Laravel pretty URLs
+            <IfModule mod_rewrite.c>
+                RewriteEngine On
+                RewriteCond %{REQUEST_FILENAME} !-f
+                RewriteCond %{REQUEST_FILENAME} !-d
+                RewriteRule ^ index.php [L]
+            </IfModule>
+        </Directory>
+
+# ===========================================================================
+# EXAMPLE 8: Multi-Tenant SaaS Platform
+# ===========================================================================
+example_saas:
+  vhosts_list:
+    # Tenant 1
+    - domain: "client1.saas.com"
+      username: "client1"
+      php_version: "8.2"
+      state: "present"
+    
+    # Tenant 2
+    - domain: "client2.saas.com"
+      username: "client2"
+      php_version: "8.2"
+      state: "present"
+    
+    # Tenant 3
+    - domain: "client3.saas.com"
+      username: "client3"
+      php_version: "8.2"
+      state: "present"
+
+# ===========================================================================
+# EXAMPLE 9: Agency Hosting Multiple Clients
+# ===========================================================================
+example_agency:
+  vhosts_list:
+    # Client A - E-commerce
+    - domain: "clienta.com"
+      username: "clienta"
+      php_version: "8.1"
+      state: "present"
+      server_admin: "support@agency.com"
+      server_alias: "www.clienta.com"
+    
+    # Client B - Blog
+    - domain: "clientb.com"
+      username: "clientb"
+      php_version: "8.2"
+      state: "present"
+      server_admin: "support@agency.com"
+    
+    # Client C - Portfolio
+    - domain: "clientc.com"
+      username: "clientc"
+      php_version: "8.2"
+      state: "present"
+      server_admin: "support@agency.com"
+
+# ===========================================================================
+# EXAMPLE 10: Testing Multiple PHP Versions
+# ===========================================================================
+example_php_testing:
+  vhosts_list:
+    - domain: "php74.test"
+      username: "php74test"
+      php_version: "7.4"
+      state: "present"
+    
+    - domain: "php80.test"
+      username: "php80test"
+      php_version: "8.0"
+      state: "present"
+    
+    - domain: "php81.test"
+      username: "php81test"
+      php_version: "8.1"
+      state: "present"
+    
+    - domain: "php82.test"
+      username: "php82test"
+      php_version: "8.2"
+      state: "present"
+    
+    - domain: "php83.test"
+      username: "php83test"
+      php_version: "8.3"
+      state: "present"
+
+# ===========================================================================
+# EXAMPLE 11: Subdomain Setup
+# ===========================================================================
+example_subdomains:
+  vhosts_list:
+    # Main domain
+    - domain: "example.com"
+      username: "mainsite"
+      php_version: "8.2"
+      state: "present"
+      server_alias: "www.example.com"
+    
+    # API subdomain
+    - domain: "api.example.com"
+      username: "api"
+      php_version: "8.2"
+      state: "present"
+    
+    # Admin panel subdomain
+    - domain: "admin.example.com"
+      username: "admin"
+      php_version: "8.2"
+      state: "present"
+    
+    # Mobile subdomain
+    - domain: "m.example.com"
+      username: "mobile"
+      php_version: "8.2"
+      state: "present"
+
+# ===========================================================================
+# USAGE INSTRUCTIONS
+# ===========================================================================
+# 
+# To use any example:
+# 1. Copy the desired example to your playbook or group_vars
+# 2. Ensure users exist before running the playbook
+# 3. Customize domains, usernames, and PHP versions as needed
+# 4. Run: ansible-playbook playbook.yml
+#
+# Example command:
+#   ansible-playbook -e "@examples/vhosts_examples.yml" \
+#                    -e "example_to_use=example_basic" \
+#                    playbook.yml
+#
+###############################################################################

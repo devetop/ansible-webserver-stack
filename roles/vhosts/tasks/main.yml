@@ -1,0 +1,89 @@
+---
+###############################################################################
+# VirtualHosts Role - Main Tasks
+# Description: Orchestrates VirtualHost management with multi-PHP support
+###############################################################################
+
+- name: Display VirtualHosts role information
+  ansible.builtin.debug:
+    msg:
+      - "========================================="
+      - "Apache VirtualHosts Management"
+      - "========================================="
+      - "Total VirtualHosts configured: {{ vhosts_list | length }}"
+      - "mod_userdir enabled: {{ vhosts_userdir_enabled }}"
+      - "========================================="
+
+- name: Validate vhosts_list variable is defined
+  ansible.builtin.assert:
+    that:
+      - vhosts_list is defined
+      - vhosts_list | length > 0
+    fail_msg: "vhosts_list must be defined and contain at least one VirtualHost"
+    success_msg: "VirtualHost configuration validated"
+
+- name: Create sites-available and sites-enabled directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - "{{ vhosts_available_dir }}"
+    - "{{ vhosts_enabled_dir }}"
+  when: vhosts_create_dirs
+
+- name: Ensure required Apache modules are loaded
+  ansible.builtin.command: "httpd -M | grep -E '(proxy_module|proxy_fcgi_module|userdir_module|rewrite_module)'"
+  register: apache_modules_check
+  changed_when: false
+  failed_when: false
+
+- name: Display Apache modules status
+  ansible.builtin.debug:
+    msg: "Required Apache modules are loaded"
+  when: apache_modules_check.rc == 0
+
+- name: Include mod_userdir configuration tasks
+  ansible.builtin.include_tasks: setup_userdir.yml
+  when: vhosts_userdir_enabled
+  tags: ['userdir']
+
+- name: Include PHP-FPM setup tasks
+  ansible.builtin.include_tasks: setup_php_fpm.yml
+  tags: ['php-fpm']
+
+- name: Include VirtualHost management tasks
+  ansible.builtin.include_tasks: manage_vhosts.yml
+  tags: ['vhosts']
+
+- name: Validate Apache configuration
+  ansible.builtin.command: httpd -t
+  register: httpd_config_test
+  changed_when: false
+  failed_when: httpd_config_test.rc != 0
+
+- name: Display Apache configuration validation result
+  ansible.builtin.debug:
+    msg: "Apache configuration syntax is valid"
+  when: httpd_config_test.rc == 0
+
+- name: Ensure Apache is running
+  ansible.builtin.service:
+    name: "{{ vhosts_apache_service }}"
+    state: started
+    enabled: true
+
+- name: Display VirtualHosts summary
+  ansible.builtin.debug:
+    msg:
+      - "========================================="
+      - "VirtualHosts Deployment Summary"
+      - "========================================="
+      - "Active VirtualHosts: {{ vhosts_list | selectattr('state', 'equalto', 'present') | list | length }}"
+      - "Removed VirtualHosts: {{ vhosts_list | selectattr('state', 'equalto', 'absent') | list | length }}"
+      - "========================================="
+      - "Configured domains:"
+      - "{{ vhosts_list | selectattr('state', 'equalto', 'present') | map(attribute='domain') | list }}"
+      - "========================================="

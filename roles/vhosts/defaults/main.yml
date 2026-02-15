@@ -1,0 +1,74 @@
+---
+###############################################################################
+# Default Variables for VirtualHosts Role
+# Override these in group_vars, host_vars, or playbook
+###############################################################################
+
+# Apache configuration
+vhosts_apache_config_dir: "/etc/httpd/conf.d"
+vhosts_apache_service: "httpd"
+vhosts_available_dir: "/etc/httpd/sites-available"
+vhosts_enabled_dir: "/etc/httpd/sites-enabled"
+
+# User directory configuration
+vhosts_userdir_enabled: true
+vhosts_public_html_dir: "public_html"
+vhosts_userdir_permissions: "0755"
+
+# PHP-FPM socket pattern
+# Pattern: /run/php-fpm/php{version}-fpm.sock
+vhosts_php_fpm_socket_pattern: "/run/php-fpm/php{{ '{version}' }}-fpm.sock"
+
+# Create sites-available and sites-enabled directories
+vhosts_create_dirs: true
+
+# VirtualHosts List - Example Configuration
+# This is an example - override this in your group_vars or playbook
+vhosts_list:
+  - domain: "example.com"
+    username: "example"
+    php_version: "8.2"
+    state: "present"
+    server_admin: "admin@example.com"
+    
+  - domain: "dev.example.com"
+    username: "devuser"
+    php_version: "8.1"
+    state: "present"
+    server_admin: "dev@example.com"
+    
+  - domain: "legacy.example.com"
+    username: "legacy"
+    php_version: "7.4"
+    state: "present"
+    server_admin: "legacy@example.com"
+
+# Example of disabled VirtualHost
+#  - domain: "old.example.com"
+#    username: "olduser"
+#    php_version: "7.4"
+#    state: "absent"
+
+# PHP versions mapping for FPM service names
+vhosts_php_fpm_services:
+  "7.4": "php74-php-fpm"
+  "8.0": "php80-php-fpm"
+  "8.1": "php81-php-fpm"
+  "8.2": "php-fpm"
+  "8.3": "php83-php-fpm"
+
+# Default PHP version if not specified
+vhosts_default_php_version: "8.2"
+
+# Enable/disable SSL support (basic)
+vhosts_ssl_enabled: false
+
+# Log file locations
+vhosts_log_dir: "/var/log/httpd"
+
+# Additional Apache modules required
+vhosts_required_modules:
+  - mod_proxy
+  - mod_proxy_fcgi
+  - mod_userdir
+  - mod_rewrite

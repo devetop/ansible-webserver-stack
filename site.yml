@@ -7,12 +7,58 @@
 # Version: 1.0.0
 ###############################################################################
 
-- name: Deploy Web Server Stack on RedHat 9
+- name: Deploy Web Server Stack with VirtualHosts on RedHat 9
   # hosts: webservers
   hosts: local
   connection: local
   become: true
   gather_facts: true
+  
+  # Variables for VirtualHosts configuration
+  vars:
+    # VirtualHosts list
+    vhosts_list:
+      # Production site with PHP 8.2
+      # - domain: "example.com"
+      #   username: "example"
+      #   php_version: "8.2"
+      #   state: "present"
+      #   server_admin: "admin@example.com"
+      #   server_alias: "www.example.com"
+      
+      # Development site with PHP 8.1
+      - domain: "dev.rfan.my.id"
+        username: "devuser"
+        php_version: "8.1"
+        state: "present"
+        server_admin: "dev@rfan.my.id"
+        log_level: "debug"
+      
+      # Legacy site with PHP 7.4
+      # - domain: "legacy.example.com"
+      #   username: "legacy"
+      #   php_version: "7.4"
+      #   state: "present"
+      #   server_admin: "legacy@example.com"
+      
+      # Staging site with PHP 8.3
+      # - domain: "staging.example.com"
+      #   username: "staging"
+      #   php_version: "8.3"
+      #   state: "present"
+      #   server_admin: "staging@example.com"
+      
+      # Removed/disabled site (will be deleted)
+      # - domain: "old.example.com"
+      #   username: "olduser"
+      #   php_version: "7.4"
+      #   state: "absent"
+      #   archive_on_remove: true
+    
+    # Global VirtualHost settings
+    vhosts_userdir_enabled: true
+    vhosts_ssl_enabled: false
+    vhosts_create_dirs: true
   
   # Pre-tasks run before roles
   pre_tasks:
@@ -32,6 +78,15 @@
       ansible.builtin.dnf:
         update_cache: true
       changed_when: false
+    
+    - name: Ensure required users exist for VirtualHosts
+      ansible.builtin.user:
+        name: "{{ item.username }}"
+        state: "{{ 'present' if item.state == 'present' else 'absent' }}"
+        shell: /bin/bash
+        create_home: true
+      loop: "{{ vhosts_list }}"
+      tags: ['users', 'vhosts']
   
   # Roles execution order
   roles:
@@ -43,6 +98,9 @@
       
     - role: php
       tags: ['php', 'composer']
+      
+    - role: vhosts
+      tags: ['vhosts']
   
   # Post-tasks run after all roles
   post_tasks:
@@ -85,3 +143,17 @@
           - "PHP: {{ php_version.stdout_lines[0] }}"
           - "Composer: {{ composer_version.stdout_lines[0] }}"
           - "========================================"
+    
+    - name: Display VirtualHosts deployment summary
+      ansible.builtin.debug:
+        msg:
+          - "========================================="
+          - "VirtualHosts Deployment Complete"
+          - "========================================="
+          - "Active domains:"
+          - "{{ vhosts_list | selectattr('state', 'equalto', 'present') | map(attribute='domain') | list }}"
+          - "========================================="
+          - "Test your VirtualHosts:"
+          - "  curl http://example.com"
+          - "  curl http://dev.example.com/info.php"
+          - "========================================="

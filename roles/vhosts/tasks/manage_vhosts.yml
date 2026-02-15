@@ -1,0 +1,104 @@
+---
+###############################################################################
+# Manage VirtualHosts - Create and Remove
+###############################################################################
+
+- name: Create VirtualHost configuration files for present hosts
+  ansible.builtin.template:
+    src: vhost.conf.j2
+    dest: "{{ vhosts_available_dir }}/{{ item.domain }}.conf"
+    owner: root
+    group: root
+    mode: '0644'
+    validate: 'httpd -t -f %s'
+  loop: "{{ vhosts_list | selectattr('state', 'equalto', 'present') | list }}"
+  when: item.state == 'present'
+  notify: reload httpd
+
+- name: Enable VirtualHosts by creating symlinks
+  ansible.builtin.file:
+    src: "{{ vhosts_available_dir }}/{{ item.domain }}.conf"
+    dest: "{{ vhosts_enabled_dir }}/{{ item.domain }}.conf"
+    state: link
+    force: true
+  loop: "{{ vhosts_list | selectattr('state', 'equalto', 'present') | list }}"
+  when: item.state == 'present'
+  notify: reload httpd
+
+- name: Include enabled VirtualHosts in Apache configuration
+  ansible.builtin.lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    line: "IncludeOptional {{ vhosts_enabled_dir }}/*.conf"
+    state: present
+    create: false
+  notify: reload httpd
+
+- name: Remove VirtualHost symlinks for absent hosts
+  ansible.builtin.file:
+    path: "{{ vhosts_enabled_dir }}/{{ item.domain }}.conf"
+    state: absent
+  loop: "{{ vhosts_list | selectattr('state', 'equalto', 'absent') | list }}"
+  when: item.state == 'absent'
+  notify: reload httpd
+
+- name: Remove VirtualHost configuration files for absent hosts
+  ansible.builtin.file:
+    path: "{{ vhosts_available_dir }}/{{ item.domain }}.conf"
+    state: absent
+  loop: "{{ vhosts_list | selectattr('state', 'equalto', 'absent') | list }}"
+  when: item.state == 'absent'
+  notify: reload httpd
+
+- name: Archive removed VirtualHost document roots
+  ansible.builtin.archive:
+    path: "/home/{{ item.username }}/{{ vhosts_public_html_dir }}"
+    dest: "/home/{{ item.username }}/{{ vhosts_public_html_dir }}_backup_{{ ansible_date_time.epoch }}.tar.gz"
+    format: gz
+  loop: "{{ vhosts_list | selectattr('state', 'equalto', 'absent') | list }}"
+  when:
+    - item.state == 'absent'
+    - item.archive_on_remove | default(false)
+  failed_when: false
+
+- name: List all active VirtualHost configurations
+  ansible.builtin.find:
+    paths: "{{ vhosts_enabled_dir }}"
+    patterns: "*.conf"
+  register: active_vhosts
+
+- name: Display active VirtualHosts
+  ansible.builtin.debug:
+    msg: "Active VirtualHosts: {{ active_vhosts.files | map(attribute='path') | map('basename') | list }}"
+
+- name: Verify VirtualHost configurations syntax
+  ansible.builtin.command: "httpd -t -D DUMP_VHOSTS"
+  register: vhost_dump
+  changed_when: false
+  failed_when: vhost_dump.rc != 0
+
+- name: Display VirtualHost dump (verbose mode)
+  ansible.builtin.debug:
+    var: vhost_dump.stdout_lines
+  when: ansible_verbosity >= 1
+
+- name: Create VirtualHost status summary
+  ansible.builtin.set_fact:
+    vhost_summary:
+      total_configured: "{{ vhosts_list | length }}"
+      active: "{{ vhosts_list | selectattr('state', 'equalto', 'present') | list | length }}"
+      removed: "{{ vhosts_list | selectattr('state', 'equalto', 'absent') | list | length }}"
+      domains: "{{ vhosts_list | selectattr('state', 'equalto', 'present') | map(attribute='domain') | list }}"
+      php_versions: "{{ vhosts_list | selectattr('state', 'equalto', 'present') | map(attribute='php_version') | unique | list }}"
+
+- name: Display VirtualHost management summary
+  ansible.builtin.debug:
+    msg:
+      - "========================================="
+      - "VirtualHost Management Summary"
+      - "========================================="
+      - "Total Configured: {{ vhost_summary.total_configured }}"
+      - "Active: {{ vhost_summary.active }}"
+      - "Removed: {{ vhost_summary.removed }}"
+      - "Domains: {{ vhost_summary.domains }}"
+      - "PHP Versions: {{ vhost_summary.php_versions }}"
+      - "========================================="

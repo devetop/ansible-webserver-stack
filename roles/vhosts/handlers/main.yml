@@ -1,0 +1,31 @@
+---
+###############################################################################
+# VirtualHosts Role - Handlers
+# Description: Service management handlers for Apache
+###############################################################################
+
+- name: restart httpd
+  ansible.builtin.service:
+    name: "{{ vhosts_apache_service }}"
+    state: restarted
+  listen: restart httpd
+
+- name: reload httpd
+  ansible.builtin.service:
+    name: "{{ vhosts_apache_service }}"
+    state: reloaded
+  listen: reload httpd
+
+- name: validate httpd config
+  ansible.builtin.command: httpd -t
+  changed_when: false
+  failed_when: false
+  listen: validate httpd config
+
+- name: restart php-fpm services
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: restarted
+  loop: "{{ vhosts_php_fpm_services_to_restart }}"
+  when: vhosts_php_fpm_services_to_restart is defined
+  listen: restart php-fpm services
