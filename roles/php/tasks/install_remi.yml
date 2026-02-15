@@ -15,11 +15,6 @@
     disable_gpg_check: false
   when: not remi_repo_file.stat.exists
 
-- name: Import Remi GPG key
-  ansible.builtin.rpm_key:
-    key: "{{ remi_repo_gpg_key }}"
-    state: present
-
 - name: Enable PowerTools/CRB repository (required for PHP dependencies)
   ansible.builtin.command: dnf config-manager --set-enabled crb
   args:

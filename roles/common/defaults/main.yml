@@ -23,7 +23,7 @@ common_packages:
 
 # NTP/Time synchronization
 ntp_enabled: true
-ntp_timezone: "UTC"
+ntp_timezone: "Asia/Jakarta"
 
 # Firewall configuration
 firewall_enabled: true

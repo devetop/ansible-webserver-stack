@@ -10,7 +10,6 @@ php_enable_remi_repo: true
 
 # Remi repository configuration
 remi_repo_url: "https://rpms.remirepo.net/enterprise/remi-release-9.rpm"
-remi_repo_gpg_key: "https://rpms.remirepo.net/RPM-GPG-KEY-remi2023"
 
 # PHP packages to install
 php_packages:

@@ -7,7 +7,7 @@
 galaxy_info:
   role_name: common
   author: DevOps Team
-  description: Common system configuration for Rocky Linux 9
+  description: Common system configuration for RedHat 9
   company: Your Company
   license: MIT
   min_ansible_version: 2.10

@@ -108,6 +108,7 @@
   loop:
     - http
     - https
+    - http3
   when: configure_firewall | default(true)
   tags: ['firewall']
 

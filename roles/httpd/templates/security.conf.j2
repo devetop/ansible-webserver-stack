@@ -14,6 +14,10 @@ TraceEnable {{ httpd_trace_enable }}
 # Clickjacking protection
 Header always append X-Frame-Options SAMEORIGIN
 
+# HSTS
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
 # XSS Protection
 Header set X-XSS-Protection "1; mode=block"
 
@@ -30,10 +34,6 @@ Header set Referrer-Policy "strict-origin-when-cross-origin"
 <Directory "{{ httpd_document_root }}">
     Options -Indexes +FollowSymLinks
 </Directory>
-
-# Hide Apache version and OS
-ServerTokens Prod
-ServerSignature Off
 
 # Limit request size (10MB)
 LimitRequestBody 10485760

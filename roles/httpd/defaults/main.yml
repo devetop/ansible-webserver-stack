@@ -8,6 +8,7 @@ httpd_packages:
   - httpd
   - httpd-tools
   - mod_ssl
+  - mod_fcgid
 
 # Apache service name
 httpd_service_name: httpd

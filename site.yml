@@ -2,12 +2,12 @@
 ###############################################################################
 # Main Site Playbook - Web Server Stack Provisioning
 # Description: Orchestrates the deployment of Apache, PHP 8.2, and Composer
-# Target OS: Rocky Linux 9
+# Target OS: Red Hat Enterprise Linux 9 or compatible distribution
 # Author: DevOps Team
 # Version: 1.0.0
 ###############################################################################
 
-- name: Deploy Web Server Stack on Rocky Linux 9
+- name: Deploy Web Server Stack on RedHat 9
   # hosts: webservers
   hosts: local
   connection: local
