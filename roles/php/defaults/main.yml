@@ -29,6 +29,15 @@ php_packages:
   - php-intl
   - php-soap
   - php-bcmath
+  - php-brotli
+  - php-intl
+  - php-ioncube-loader
+  - php-pecl-imagick
+  - php-pecl-mcrypt
+  - php-sodium
+  - php-pecl-memcache
+  - php-pecl-memcached
+  - php-pecl-redis6
 
 # PHP-FPM service
 php_fpm_service: php-fpm
@@ -69,13 +78,16 @@ php_fpm_pm_max_spare_servers: 35
 php_session_save_handler: "files"
 php_session_save_path: "/var/lib/php/session"
 php_session_gc_maxlifetime: "1440"
+php_session_gc_probability: "1"
 
 # OPcache configuration
 php_opcache_enable: "1"
-php_opcache_memory_consumption: "128"
-php_opcache_interned_strings_buffer: "8"
-php_opcache_max_accelerated_files: "10000"
+php_opcache_memory_consumption: "256"
+php_opcache_interned_strings_buffer: "16"
+php_opcache_max_accelerated_files: "20000"
 php_opcache_revalidate_freq: "2"
+# Production Only
+php_opcache_validate_timestamps: "0"
 
 # Composer configuration
 composer_install: true

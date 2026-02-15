@@ -158,7 +158,7 @@ opcache.interned_strings_buffer={{ php_opcache_interned_strings_buffer }}
 opcache.max_accelerated_files={{ php_opcache_max_accelerated_files }}
 opcache.revalidate_freq={{ php_opcache_revalidate_freq }}
 opcache.fast_shutdown=1
-opcache.validate_timestamps=1
+opcache.validate_timestamps={{ php_opcache_validate_timestamps }}
 
 [curl]
 
@@ -178,7 +178,7 @@ session.cookie_domain =
 session.cookie_httponly = 1
 session.cookie_samesite =
 session.serialize_handler = php
-session.gc_probability = 1
+session.gc_probability = {{ php_session_gc_probability }}
 session.gc_divisor = 1000
 session.gc_maxlifetime = {{ php_session_gc_maxlifetime }}
 session.referer_check =

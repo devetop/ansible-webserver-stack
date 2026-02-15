@@ -65,7 +65,7 @@
         msg: "{{ php_version.stdout_lines[0] }}"
     
     - name: Verify Composer installation
-      ansible.builtin.command: composer --version
+      ansible.builtin.command: "{{ composer_install_path }} --version"
       register: composer_version
       changed_when: false
       failed_when: composer_version.rc != 0

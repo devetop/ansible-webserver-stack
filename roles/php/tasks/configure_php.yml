@@ -57,6 +57,7 @@
   loop:
     - { key: 'session.save_handler', value: '{{ php_session_save_handler }}' }
     - { key: 'session.save_path', value: '"{{ php_session_save_path }}"' }
+    - { key: 'session.gc_probability', value: '{{ php_session_gc_probability }}' }
     - { key: 'session.gc_maxlifetime', value: '{{ php_session_gc_maxlifetime }}' }
   notify:
     - restart php-fpm
@@ -74,6 +75,7 @@
     - { key: 'opcache.memory_consumption', value: '{{ php_opcache_memory_consumption }}' }
     - { key: 'opcache.interned_strings_buffer', value: '{{ php_opcache_interned_strings_buffer }}' }
     - { key: 'opcache.max_accelerated_files', value: '{{ php_opcache_max_accelerated_files }}' }
+    - { key: 'opcache.validate_timestamps', value: '{{ php_opcache_validate_timestamps }}' }
     - { key: 'opcache.revalidate_freq', value: '{{ php_opcache_revalidate_freq }}' }
   notify:
     - restart php-fpm
