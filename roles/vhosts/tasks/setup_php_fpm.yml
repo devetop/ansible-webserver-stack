@@ -118,7 +118,7 @@
 
 - name: Set SELinux context for PHP-FPM sockets
   community.general.sefcontext:
-    target: "/run/php-fpm(/.*)?"
+    target: "/var/run/php-fpm(/.*)?"
     setype: httpd_var_run_t
     state: present
   when:
@@ -126,7 +126,7 @@
     - ansible_selinux.status == "enabled"
 
 - name: Apply SELinux context to PHP-FPM socket directory
-  ansible.builtin.command: "restorecon -Rv /run/php-fpm"
+  ansible.builtin.command: "restorecon -Rv /var/run/php-fpm"
   register: selinux_restore_fpm
   changed_when: "'Relabeled' in selinux_restore_fpm.stdout"
   failed_when: false
