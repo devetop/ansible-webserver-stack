@@ -31,8 +31,6 @@
 
 - name: Enable PHP {{ php_version }} module from Remi
   ansible.builtin.command: "dnf module enable php:remi-{{ php_version }} -y"
-  args:
-    warn: false
   register: php_module_enable
   changed_when: "'Enabling module streams' in php_module_enable.stdout"
 
