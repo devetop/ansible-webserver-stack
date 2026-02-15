@@ -20,13 +20,13 @@
       ansible.builtin.debug:
         msg: "Deploying to {{ inventory_hostname }} ({{ ansible_distribution }} {{ ansible_distribution_version }})"
     
-    - name: Verify Rocky Linux 9
+    - name: Verify Red Hat Enterprise Linux 9 or compatible distribution
       ansible.builtin.assert:
         that:
-          - ansible_distribution == "Rocky"
+          - ansible_distribution_file_variety == "RedHat"
           - ansible_distribution_major_version == "9"
-        fail_msg: "This playbook requires Rocky Linux 9"
-        success_msg: "Operating system verified: Rocky Linux 9"
+        fail_msg: "This playbook requires Red Hat Enterprise Linux 9 or compatible distribution. Detected: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+        success_msg: "Operating system verified: Red Hat Enterprise Linux 9 or compatible distribution"
     
     - name: Update system packages cache
       ansible.builtin.dnf:
